@@ -6,12 +6,10 @@ import numpy as np
 def record(channel,outFN):
     RESPEAKER_RATE = 16000
     RESPEAKER_CHANNELS = 6 # change base on firmwares, 1_channel_firmware.bin as 1 or 6_channels_firmware.bin as 6
-    RESPEAKER_CHANNELS = 1 # change base on firmwares, 1_channel_firmware.bin as 1 or 6_channels_firmware.bin as 6
     RESPEAKER_WIDTH = 2
     RESPEAKER_INDEX = 2  # refer to input device id from executing "get_index.py"
     CHUNK = 1024
     RECORD_SECONDS = 5
-    RECORD_SECONDS = 10
 
     p = pyaudio.PyAudio()
 
@@ -26,11 +24,10 @@ def record(channel,outFN):
 
     frames = []
 
-    for i in range(0, int(RESPEAKER_RATE / CHUNK * RECORD_SECONDS)):
+    for i in range(0, int((RESPEAKER_RATE / CHUNK) * RECORD_SECONDS)):
         data = stream.read(CHUNK)
-        # if you want to extract channel X, please change to [X::6]
-        a = np.fromstring(data,dtype=np.int16)[channel::6]
-        frames.append(a.tostring())
+        a = np.frombuffer(data,dtype=np.int16)[channel::6]
+        frames.append(a.tobytes())
 
     print("* done recording")
 
@@ -39,7 +36,7 @@ def record(channel,outFN):
     p.terminate()
 
     wf = wave.open(outFN, 'wb')
-    wf.setnchannels(RESPEAKER_CHANNELS)
+    wf.setnchannels(1)
     wf.setsampwidth(p.get_sample_size(p.get_format_from_width(RESPEAKER_WIDTH)))
     wf.setframerate(RESPEAKER_RATE)
     wf.writeframes(b''.join(frames))
